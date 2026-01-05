@@ -255,34 +255,30 @@ stages:
               if [ -n "$(anypointClientId)" ] && [ -n "$(anypointClientSecret)" ]; then
                 echo "   Using Connected App authentication"
                 
-                # Create credentials.json with Connected App
-                cat > ~/.anypoint/credentials.json <<EOF
-{
-  "default": {
-    "client_id": "$(anypointClientId)",
-    "client_secret": "$(anypointClientSecret)",
-    "organization": "$(MULE_ORG)",
-    "environment": "Sandbox",
-    "host": "anypoint.mulesoft.com"
-  }
-}
-EOF
+                # Create credentials.json with Connected App (using echo to avoid YAML parsing issues)
+                echo '{' > ~/.anypoint/credentials.json
+                echo '  "default": {' >> ~/.anypoint/credentials.json
+                echo '    "client_id": "$(anypointClientId)",' >> ~/.anypoint/credentials.json
+                echo '    "client_secret": "$(anypointClientSecret)",' >> ~/.anypoint/credentials.json
+                echo '    "organization": "$(MULE_ORG)",' >> ~/.anypoint/credentials.json
+                echo '    "environment": "Sandbox",' >> ~/.anypoint/credentials.json
+                echo '    "host": "anypoint.mulesoft.com"' >> ~/.anypoint/credentials.json
+                echo '  }' >> ~/.anypoint/credentials.json
+                echo '}' >> ~/.anypoint/credentials.json
                 
               elif [ -n "$(anypointUsername)" ] && [ -n "$(anypointPassword)" ]; then
                 echo "   Using username/password authentication"
                 
-                # Create credentials.json with user credentials
-                cat > ~/.anypoint/credentials.json <<EOF
-{
-  "default": {
-    "username": "$(anypointUsername)",
-    "password": "$(anypointPassword)",
-    "organization": "$(MULE_ORG)",
-    "environment": "Sandbox",
-    "host": "anypoint.mulesoft.com"
-  }
-}
-EOF
+                # Create credentials.json with user credentials (using echo to avoid YAML parsing issues)
+                echo '{' > ~/.anypoint/credentials.json
+                echo '  "default": {' >> ~/.anypoint/credentials.json
+                echo '    "username": "$(anypointUsername)",' >> ~/.anypoint/credentials.json
+                echo '    "password": "$(anypointPassword)",' >> ~/.anypoint/credentials.json
+                echo '    "organization": "$(MULE_ORG)",' >> ~/.anypoint/credentials.json
+                echo '    "environment": "Sandbox",' >> ~/.anypoint/credentials.json
+                echo '    "host": "anypoint.mulesoft.com"' >> ~/.anypoint/credentials.json
+                echo '  }' >> ~/.anypoint/credentials.json
+                echo '}' >> ~/.anypoint/credentials.json
                 
               else
                 echo "⚠️ WARNING: No Anypoint credentials configured"
