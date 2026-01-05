@@ -227,109 +227,72 @@ stages:
                 maven
               path: $(MAVEN_CACHE_FOLDER)
 
-         # =============================================
-# STEP 7: Install Anypoint CLI (DIAGNOSTIC)
-# =============================================
-- script: |
-    echo "📦 Installing Anypoint CLI..."
-    npm install -g anypoint-cli@latest
-    
-    echo ""
-    echo "✅ Anypoint CLI installed:"
-    anypoint-cli --version
-    
-    echo ""
-    echo "🔍 Checking Azure Variables:"
-    echo "  anypointClientId: $(anypointClientId)"
-    echo "  anypointClientSecret: [REDACTED]"
-    echo "  MULE_ORG: $(MULE_ORG)"
-    
-    echo ""
-    echo "✅ Anypoint CLI setup complete"
-    
-  displayName: 'Install Anypoint CLI'
+          # =============================================
+          # STEP 7: Install Anypoint CLI
+          # =============================================
+          - script: |
+              echo "📦 Installing Anypoint CLI..."
+              npm install -g anypoint-cli@latest
+              
+              echo ""
+              echo "✅ Anypoint CLI installed:"
+              anypoint-cli --version
+              
+            displayName: 'Install Anypoint CLI'
 
-# =============================================
-# STEP 8: API Governance Validation (Connected App)
-# =============================================
-- script: |
-    set -e  # Exit on any error
-    
-    echo "🛡️ Running API Governance Validation..."
-    echo ""
-    
-    # 🔍 DIAGNOSTIC: Check if variables exist
-    echo "🔍 Checking variables:"
-    echo "  anypointClientId exists: $( [ -n "$(anypointClientId)" ] && echo "YES" || echo "NO" )"
-    echo "  anypointClientSecret exists: $( [ -n "$(anypointClientSecret)" ] && echo "YES" || echo "NO" )"
-    echo "  MULE_ORG exists: $( [ -n "$(MULE_ORG)" ] && echo "YES" || echo "NO" )"
-    echo ""
-    
-    # Check if Anypoint credentials are configured
-    if [ -z "$(anypointClientId)" ]; then
-      echo "❌ ERROR: anypointClientId variable is empty or not defined"
-      echo "   Please check your variable group in Azure DevOps"
-      exit 0  # Exit gracefully (non-blocking)
-    fi
-    
-    if [ -z "$(anypointClientSecret)" ]; then
-      echo "❌ ERROR: anypointClientSecret variable is empty or not defined"
-      echo "   Please check your variable group in Azure DevOps"
-      exit 0  # Exit gracefully (non-blocking)
-    fi
-    
-    if [ -z "$(MULE_ORG)" ]; then
-      echo "❌ ERROR: MULE_ORG variable is empty or not defined"
-      echo "   Please check your variable group in Azure DevOps"
-      exit 0  # Exit gracefully (non-blocking)
-    fi
-    
-    echo "✅ All required variables are present"
-    echo ""
-    
-    # Create project ZIP
-    if [ ! -f "$(PROJECT_NAME).zip" ]; then
-      echo "📦 Creating project ZIP..."
-      zip -r $(PROJECT_NAME).zip . -x "*.git*" -x "target/*" -x "*.zip" 2>/dev/null || {
-        echo "⚠️ Warning: zip command failed, continuing anyway..."
-      }
-    fi
-    
-    echo ""
-    echo "🔐 Authentication: Connected App"
-    echo "   Client ID: $(anypointClientId)"
-    echo "   Organization: $(MULE_ORG)"
-    echo ""
-    echo "Running validation with Anypoint CLI..."
-    echo ""
-    
-    # ✅ Use Connected App authentication
-    # Note: Using single quotes to prevent shell interpretation
-    anypoint-cli \
-      --client_id='$(anypointClientId)' \
-      --client_secret='$(anypointClientSecret)' \
-      --organization='$(MULE_ORG)' \
-      governance api validate \
-      --rulesets ruleset.yaml \
-      $(PROJECT_NAME).zip 2>&1 || {
-        EXIT_CODE=$?
-        echo ""
-        echo "⚠️ Governance validation failed (exit code: $EXIT_CODE)"
-        echo "   Possible reasons:"
-        echo "   - No ruleset.yaml file in project"
-        echo "   - API Governance not enabled in organization"
-        echo "   - Connected App missing 'Design Center Developer' scope"
-        echo "   - Client credentials may be incorrect"
-        echo ""
-        echo "   This is non-blocking, continuing..."
-      }
-    
-    echo ""
-    echo "✅ Governance step completed"
-    
-  displayName: 'API Governance Validation (Connected App - Diagnostic)'
-  continueOnError: true
-  condition: and(succeeded(), ne(variables['MULE_ORG'], ''))
+         # =============================================
+          # STEP 8: API Governance Validation (Connected App)
+          # =============================================
+          - script: |
+              echo "🛡️ Running API Governance Validation..."
+              echo ""
+              
+              # Check if Anypoint credentials are configured
+              if [ -z "$(anypointClientId)" ] || [ -z "$(anypointClientSecret)" ]; then
+                echo "⚠️ Anypoint CLI credentials not configured"
+                echo "   Variables 'anypointClientId' and 'anypointClientSecret' are missing"
+                echo "   Skipping governance validation..."
+                exit 0
+              fi
+              
+              # Create project ZIP
+              if [ ! -f "$(PROJECT_NAME).zip" ]; then
+                echo "Creating project ZIP..."
+                zip -r $(PROJECT_NAME).zip . -x "*.git*" -x "target/*" -x "*.zip"
+                echo "✅ ZIP created: $(PROJECT_NAME).zip"
+              fi
+              
+              echo ""
+              echo "🔐 Authentication: Connected App"
+              echo "   Client ID: $(anypointClientId)"
+              echo "   Organization: $(MULE_ORG)"
+              echo ""
+              echo "Running validation..."
+              
+              # ✅ Use Connected App authentication (--client_id, --client_secret)
+              anypoint-cli \
+                --client_id='$(anypointClientId)' \
+                --client_secret='$(anypointClientSecret)' \
+                --organization='$(MULE_ORG)' \
+                governance api validate \
+                --rulesets ruleset.yaml \
+                $(PROJECT_NAME).zip || {
+                  echo ""
+                  echo "⚠️ Governance validation failed or not configured"
+                  echo "   Possible reasons:"
+                  echo "   - No ruleset.yaml file in project"
+                  echo "   - API Governance not enabled in org"
+                  echo "   - Connected App needs 'Design Center Developer' scope"
+                  echo ""
+                  echo "   This is non-blocking, continuing..."
+                }
+              
+              echo ""
+              echo "✅ Governance step completed"
+              
+            displayName: 'API Governance Validation (Connected App)'
+            continueOnError: true
+            condition: and(succeeded(), ne(variables['MULE_ORG'], ''))
 
           # =============================================
           # STEP 9: Maven Validate
