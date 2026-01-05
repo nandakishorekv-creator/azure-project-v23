@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns="http://www.mulesoft.org/schema/mule/core"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+      xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce"
+      xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core ./knowledge-base/schemas/mule-core.xsd
+        http://www.mulesoft.org/schema/mule/ee/core ./knowledge-base/schemas/mule-core.xsd
+        http://www.mulesoft.org/schema/mule/salesforce ./knowledge-base/schemas/mule-salesforce.xsd">
+
+  <flow name="post-opportunities-flow" doc:id="doc-c515ba4b">
+    <ee:transform doc:name="Prepare Opportunity Data" doc:id="doc-c412c7f2">
+      <ee:message doc:id="doc-e97259c1">
+        <ee:set-payload doc:id="doc-1d964c5f" resource="dw/prepare-opportunity-data-8.dwl"></ee:set-payload>
+      </ee:message>
+    </ee:transform>
+    <salesforce:create config-ref="Salesforce_Config" type="Opportunity" doc:name="Create Opportunity" doc:id="doc-639fbb2b"></salesforce:create>
+    <ee:transform doc:name="Transform Response" doc:id="doc-4a599c9e">
+      <ee:message doc:id="doc-6fcee7f0">
+        <ee:set-payload doc:id="doc-2bc6227b" resource="dw/transform-response-9.dwl"></ee:set-payload>
+      </ee:message>
+    </ee:transform>
+    <error-handler ref="globalErrorHandler"></error-handler>
+  </flow>
+
+  <flow name="get-opportunities-flow" doc:id="doc-5d87b369">
+    <salesforce:query config-ref="Salesforce_Config" doc:name="Query Opportunities" doc:id="doc-d4972d28">
+      <salesforce:salesforce-query doc:id="doc-8744662d">
+        SELECT Id, Name, StageName, CloseDate, Amount, AccountId, Probability FROM Opportunity ORDER BY CreatedDate DESC
+      </salesforce:salesforce-query>
+    </salesforce:query>
+    <ee:transform doc:name="Transform Response" doc:id="doc-8c9bb382">
+      <ee:message doc:id="doc-888a581a">
+        <ee:set-payload doc:id="doc-1aeb4997" resource="dw/transform-response-10.dwl"></ee:set-payload>
+      </ee:message>
+    </ee:transform>
+    <error-handler ref="globalErrorHandler"></error-handler>
+  </flow>
+
+  <flow name="put-opportunities-flow" doc:id="doc-ce655880">
+    <ee:transform doc:name="Prepare Update Data" doc:id="doc-2709647d">
+      <ee:message doc:id="doc-ff7a229c">
+        <ee:set-payload doc:id="doc-9ec5da1c" resource="dw/prepare-update-data-11.dwl"></ee:set-payload>
+      </ee:message>
+    </ee:transform>
+    <salesforce:update config-ref="Salesforce_Config" type="Opportunity" doc:name="Update Opportunity" doc:id="doc-137858ce"></salesforce:update>
+    <ee:transform doc:name="Transform Response" doc:id="doc-cc9c1c52">
+      <ee:message doc:id="doc-6073e76f">
+        <ee:set-payload doc:id="doc-04056d74" resource="dw/transform-response-12.dwl"></ee:set-payload>
+      </ee:message>
+    </ee:transform>
+    <error-handler ref="globalErrorHandler"></error-handler>
+  </flow>
+
+  <flow name="delete-opportunities-flow" doc:id="doc-58e62c2f">
+    <ee:transform doc:name="Prepare Delete" doc:id="doc-26942961">
+      <ee:message doc:id="doc-c385381d">
+        <ee:set-payload doc:id="doc-ece77d1d" resource="dw/prepare-delete-13.dwl"></ee:set-payload>
+      </ee:message>
+    </ee:transform>
+    <salesforce:delete config-ref="Salesforce_Config" doc:name="Delete Opportunity" doc:id="doc-f2beffd5"></salesforce:delete>
+    <ee:transform doc:name="Transform Response" doc:id="doc-70fedf30">
+      <ee:message doc:id="doc-06337e32">
+        <ee:set-payload doc:id="doc-15e58e92" resource="dw/transform-response-14.dwl"></ee:set-payload>
+      </ee:message>
+    </ee:transform>
+    <error-handler ref="globalErrorHandler"></error-handler>
+  </flow>
+
+</mule>
